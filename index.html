@@ -20,9 +20,26 @@
       text-shadow: 0 0 5px #00ffff33;
     }
 
+    #player-container {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #1a1a1a;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      gap: 20px;
+    }
+
+    #player-left {
+      flex: 1;
+      min-width: 250px;
+    }
+
     #player {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 10px;
       flex-wrap: wrap;
     }
@@ -41,10 +58,10 @@
     }
 
     #track-image {
-      width: 50px;
-      height: 50px;
+      width: 300px;
+      height: 300px;
       object-fit: cover;
-      border-radius: 5px;
+      border-radius: 10px;
       background-color: #222;
     }
 
@@ -65,24 +82,60 @@
       accent-color: #00ffff;
       cursor: pointer;
     }
+
+    #volume-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 800px) {
+      #player-container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      #track-image {
+        width: 100%;
+        height: auto;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>totallyalarp.org</h1>
 
-  <div id="player">
-    <button id="prev">⏮</button>
-    <button id="play">▶</button>
-    <button id="next">⏭</button>
+  <!-- Darker card area for title and player -->
+  <div id="player-container">
+    <!-- Left side: controls -->
+    <div id="player-left">
+      <h1>totallyalarp.org</h1>
+      <div id="player">
+        <div>
+          <button id="prev">⏮</button>
+          <button id="play">▶</button>
+          <button id="next">⏭</button>
+        </div>
 
-    <div id="track-info">
-      <img id="track-image" src="" alt="Track Image">
-      <span id="track-title">Track Name</span>
+        <div id="track-info">
+          <span id="track-title">Track Name</span>
+        </div>
+
+        <div id="volume-container">
+          <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5">
+          <span id="volume-label">50%</span>
+        </div>
+
+        <audio id="audio"></audio>
+      </div>
     </div>
 
-    <input type="range" id="volume" min="0" max="1" step="0.01" value="1">
-    <audio id="audio"></audio>
+    <!-- Right side: large track image -->
+    <img id="track-image" src="" alt="Track Image">
   </div>
+
+  <p style="text-align: center; font-weight: normal; margin: 35px 0;">
+    Currently: setting up the AI Micro-Cap experiment with 1K GBP to see how it performs with a larger portfolio. - updates soon
+  </p>
 
   <script>
     const tracks = [
@@ -91,14 +144,31 @@
       {title: "vampires at 12", file: "audio/vampires at 12.mp3", image: "images/vampires.jpg"}
     ];
 
-    let current = 0;
+    let current = -1; 
+    let shuffleQueue = [];
+
     const audio = document.getElementById('audio');
     const title = document.getElementById('track-title');
     const img = document.getElementById('track-image');
     const playBtn = document.getElementById('play');
     const volumeSlider = document.getElementById('volume');
+    const volumeLabel = document.getElementById('volume-label');
+
+    function resetShuffleQueue() {
+      shuffleQueue = tracks.map((_, i) => i);
+      for (let i = shuffleQueue.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffleQueue[i], shuffleQueue[j]] = [shuffleQueue[j], shuffleQueue[i]];
+      }
+    }
+
+    function getNextTrackIndex() {
+      if (shuffleQueue.length === 0) resetShuffleQueue();
+      return shuffleQueue.shift();
+    }
 
     function loadTrack(index) {
+      current = index;
       audio.src = tracks[index].file;
       title.textContent = tracks[index].title;
       img.src = tracks[index].image;
@@ -115,40 +185,33 @@
     }
 
     function nextTrack() {
-      current = (current + 1) % tracks.length;
-      loadTrack(current);
-      audio.play();
-      playBtn.textContent = '⏸';
+      const index = getNextTrackIndex();
+      loadTrack(index);
+      audio.play().then(() => playBtn.textContent = '⏸').catch(() => playBtn.textContent = '▶');
     }
 
     function prevTrack() {
-      current = (current - 1 + tracks.length) % tracks.length;
-      loadTrack(current);
-      audio.play();
-      playBtn.textContent = '⏸';
+      const index = getNextTrackIndex();
+      loadTrack(index);
+      audio.play().then(() => playBtn.textContent = '⏸').catch(() => playBtn.textContent = '▶');
     }
 
     // Initialize
-    loadTrack(current);
+    window.addEventListener('load', () => {
+      resetShuffleQueue();
+      nextTrack();
+      audio.volume = volumeSlider.value;
+      volumeLabel.textContent = Math.round(volumeSlider.value * 100) + "%";
+    });
 
-    // Event listeners
     playBtn.addEventListener('click', playPause);
     document.getElementById('next').addEventListener('click', nextTrack);
     document.getElementById('prev').addEventListener('click', prevTrack);
     audio.addEventListener('ended', nextTrack);
 
-    // Volume control
     volumeSlider.addEventListener('input', () => {
-      audio.volume = (volumeSlider.value) / 5;
-    });
-
-    // Autoplay when page loads
-    window.addEventListener('load', () => {
-      audio.play().then(() => {
-        playBtn.textContent = '⏸';
-      }).catch(err => {
-        console.log("Autoplay blocked by browser:", err);
-      });
+      audio.volume = volumeSlider.value;
+      volumeLabel.textContent = Math.round(volumeSlider.value * 100) + "%";
     });
   </script>
 </body>
