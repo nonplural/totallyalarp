@@ -24,14 +24,28 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      flex-wrap: wrap; /* ✅ prevent overflow if title is long */
+      flex-wrap: wrap;
+    }
+
+    #track-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     #track-title {
       font-size: 1rem;
-      white-space: normal; /* ✅ allow wrapping */
-      overflow: visible;   /* ✅ no cutoff */
-      max-width: none;     /* ✅ no forced width */
+      white-space: normal;
+      overflow: visible;
+      max-width: none;
+    }
+
+    #track-image {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 5px;
+      background-color: #222;
     }
 
     button {
@@ -60,27 +74,34 @@
     <button id="prev">⏮</button>
     <button id="play">▶</button>
     <button id="next">⏭</button>
-    <span id="track-title">Track Name</span>
+
+    <div id="track-info">
+      <img id="track-image" src="" alt="Track Image">
+      <span id="track-title">Track Name</span>
+    </div>
+
     <input type="range" id="volume" min="0" max="1" step="0.01" value="1">
     <audio id="audio"></audio>
   </div>
 
   <script>
     const tracks = [
-      {title: "hi-c - spend it all", file: "audio/hi-c - spend it all (prod mrcheezl).mp3"},
-      {title: "SubaHibi OST: Tractatus Logico philosophicus", file: "audio/Tractatus Logico-philosophicus.mp3"},
-      {title: "vampires at 12", file: "audio/vampires at 12.mp3"}
+      {title: "hi-c - spend it all", file: "audio/hi-c - spend it all (prod mrcheezl).mp3", image: "images/hi-c.jpg"},
+      {title: "SubaHibi OST: Tractatus Logico philosophicus", file: "audio/Tractatus Logico-philosophicus.mp3", image: "images/tractatus.jpg"},
+      {title: "vampires at 12", file: "audio/vampires at 12.mp3", image: "images/vampires.jpg"}
     ];
 
     let current = 0;
     const audio = document.getElementById('audio');
     const title = document.getElementById('track-title');
+    const img = document.getElementById('track-image');
     const playBtn = document.getElementById('play');
     const volumeSlider = document.getElementById('volume');
 
     function loadTrack(index) {
       audio.src = tracks[index].file;
       title.textContent = tracks[index].title;
+      img.src = tracks[index].image;
     }
 
     function playPause() {
@@ -118,7 +139,7 @@
 
     // Volume control
     volumeSlider.addEventListener('input', () => {
-      audio.volume = volumeSlider.value;
+      audio.volume = (volumeSlider.value) / 5;
     });
 
     // Autoplay when page loads
